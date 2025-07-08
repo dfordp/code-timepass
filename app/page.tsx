@@ -2038,15 +2038,6 @@ const handleMinimizeTerminal = () => {
                   {generatingCode && (
                     <ThinkingIndicator isThinking={generatingCode} text="Generating your application..." />
                   )}
-
-                  {selectedNodeId && selectedNodeCode && (
-                    <CodeGeneration
-                      isVisible={!!selectedNodeId} 
-                      nodeId={selectedNodeId}
-                      code={selectedNodeCode}
-                      title={workflow?.nodes.find(n => n.id === selectedNodeId)?.name || "Code"}
-                    />
-                  )}
                   
                   <CardFooter className="border-t border-theme-accent-1/10 bg-white/80 p-3">
                     <motion.div 
