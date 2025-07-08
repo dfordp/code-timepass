@@ -66,6 +66,9 @@ export type Node = {
    * Steps to execute within the node
    */
   steps: Array<Step>;
+
+  code_snippet?: string;
+
 };
 export type TemplateInput = {
   /**
@@ -120,6 +123,8 @@ export type WorkflowRunDiff = {
   fields: { [key in string]?: FieldDiff };
 };
 export type Workflow = {
+  name : string;
+  description : string;
   /**
    * Version of the workflow format
    */
@@ -378,4 +383,10 @@ export type WorkflowRun = {
    * End time of the workflow run (if completed or failed)
    */
   ended_at?: string | null;
+};
+
+export type LangChainMessage = {
+  id: string;
+  type: 'human' | 'ai';
+  content: string;
 };

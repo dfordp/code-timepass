@@ -1,3 +1,6 @@
+// filepath: d:\Projects\Development\codemod-assignemnt\components\ui\progress.tsx
+"use client"
+
 import * as React from "react"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
 
@@ -10,7 +13,7 @@ const Progress = React.forwardRef<
   <ProgressPrimitive.Root
     ref={ref}
     className={cn(
-      "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
+      "relative h-2 w-full overflow-hidden rounded-full bg-secondary",
       className
     )}
     {...props}

@@ -3,4 +3,122 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 72 68% 93%;  /* #F4F9E0 */
+    --foreground: 200 12% 13%; /* #1C2326 */
+    
+    --card: 72 68% 93%;        /* #F4F9E0 */
+    --card-foreground: 200 12% 13%; /* #1C2326 */
+    
+    --popover: 72 68% 93%;     /* #F4F9E0 */
+    --popover-foreground: 200 12% 13%; /* #1C2326 */
+    
+    --primary: 86 93% 62%;     /* #DAF682 */
+    --primary-foreground: 200 12% 13%; /* #1C2326 */
+    
+    --secondary: 92 93% 68%;   /* #D2FA62 */
+    --secondary-foreground: 200 12% 13%; /* #1C2326 */
+    
+    --muted: 211 6% 66%;       /* #A3A9AE */
+    --muted-foreground: 200 12% 13%; /* #1C2326 */
+    
+    --accent: 359 24% 50%;     /* #9D6263 */
+    --accent-foreground: 72 68% 93%; /* #F4F9E0 */
+    
+    --destructive: 359 24% 50%; /* #9D6263 */
+    --destructive-foreground: 72 68% 93%; /* #F4F9E0 */
+    
+    --border: 200 12% 13% / 0.2; /* #1C2326 with opacity */
+    --input: 200 12% 13% / 0.2;  /* #1C2326 with opacity */
+    --ring: 86 93% 62%;         /* #DAF682 */
+    
+    --radius: 0.5rem;
+  }
+  
+  .dark {
+    --background: 200 12% 13%;  /* #1C2326 */
+    --foreground: 72 68% 93%;   /* #F4F9E0 */
+    
+    --card: 200 12% 13%;        /* #1C2326 */
+    --card-foreground: 72 68% 93%; /* #F4F9E0 */
+    
+    --popover: 200 12% 13%;     /* #1C2326 */
+    --popover-foreground: 72 68% 93%; /* #F4F9E0 */
+    
+    --primary: 86 93% 62%;      /* #DAF682 */
+    --primary-foreground: 200 12% 13%; /* #1C2326 */
+    
+    --secondary: 211 6% 66%;    /* #A3A9AE */
+    --secondary-foreground: 72 68% 93%; /* #F4F9E0 */
+    
+    --muted: 211 6% 66% / 0.3;  /* #A3A9AE with opacity */
+    --muted-foreground: 72 68% 93% / 0.8; /* #F4F9E0 with opacity */
+    
+    --accent: 359 24% 50%;      /* #9D6263 */
+    --accent-foreground: 72 68% 93%; /* #F4F9E0 */
+    
+    --destructive: 359 24% 50%; /* #9D6263 */
+    --destructive-foreground: 72 68% 93%; /* #F4F9E0 */
+    
+    --border: 72 68% 93% / 0.2; /* #F4F9E0 with opacity */
+    --input: 72 68% 93% / 0.2;  /* #F4F9E0 with opacity */
+    --ring: 86 93% 62%;         /* #DAF682 */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styling for workflow nodes */
+.react-flow__node {
+  @apply border-theme-accent-1 bg-theme-light text-theme-dark;
+  transition: all 0.2s ease;
+}
+
+.react-flow__node.selected {
+  @apply border-theme-accent-2 shadow-lg;
+}
+
+.react-flow__edge-path {
+  @apply stroke-theme-accent-1;
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  @apply stroke-theme-accent-2;
+  stroke-width: 3;
+}
+
+/* Typing animation for the loading indicator */
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+}
+
+.typing-dot {
+  animation: pulse 1.5s infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
 }
