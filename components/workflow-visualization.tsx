@@ -187,66 +187,80 @@ function NodeDetailsPanel({
           
           <div className="max-h-[350px] overflow-auto p-4">
             {activeTab === 'overview' ? (
-              <div className="space-y-4">
-                <div>
-                  <h4 className="mb-1 text-sm font-medium text-theme-dark/70">Description</h4>
-                  <p className="text-sm text-theme-dark">{selectedNode.description}</p>
-                </div>
-                
-                {selectedNode.depends_on && selectedNode.depends_on.length > 0 && (
-                  <div>
-                    <h4 className="mb-1 text-sm font-medium text-theme-dark/70">Dependencies</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedNode.depends_on.map((dep: string) => (
-                        <Badge key={dep} variant="default" className="bg-theme-accent-2/70">
-                          {dep}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div>
-                  <h4 className="mb-1 text-sm font-medium text-theme-dark/70">Type</h4>
-                  <Badge 
-                    variant={selectedNode.type === 'automatic' ? 'default' : 'secondary'}
-                    className={selectedNode.type === 'automatic' 
-                      ? 'bg-theme-accent-1' 
-                      : 'bg-theme-accent-2/70'
-                    }
-                  >
-                    {selectedNode.type}
-                  </Badge>
-                </div>
+  <div className="space-y-4">
+    <div>
+      <h4 className="mb-1 text-sm font-medium text-theme-dark/70">Description</h4>
+      <p className="text-sm text-theme-dark">{selectedNode.description}</p>
+    </div>
+    
+    {selectedNode.depends_on && selectedNode.depends_on.length > 0 && (
+      <div>
+        <h4 className="mb-1 text-sm font-medium text-theme-dark/70">Dependencies</h4>
+        <div className="flex flex-wrap gap-1">
+          {selectedNode.depends_on.map((dep: string) => (
+            <Badge key={dep} variant="default" className="bg-theme-accent-2/70">
+              {dep}
+            </Badge>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    <div>
+      <h4 className="mb-1 text-sm font-medium text-theme-dark/70">Type</h4>
+      <Badge 
+        variant={selectedNode.type === 'automatic' ? 'default' : 'secondary'}
+        className={selectedNode.type === 'automatic' 
+          ? 'bg-theme-accent-1' 
+          : 'bg-theme-accent-2/70'
+        }
+      >
+        {selectedNode.type}
+      </Badge>
+    </div>
+  </div>
+) : (
+  <div className="relative">
+    <div className="max-h-[300px] overflow-auto bg-slate-50 rounded-md">
+      <pre className="p-4 font-mono text-[14px] leading-relaxed">
+        <code>
+          {selectedNode.code_snippet ? 
+            selectedNode.code_snippet.split('\n').map((line: string, idx: number) => (
+              <div key={idx} className="flex hover:bg-slate-100">
+                <span className="mr-4 inline-block w-10 select-none border-r border-slate-200 pr-2 text-right text-slate-400 font-medium">
+                  {idx + 1}
+                </span>
+                <span className="pl-3 text-slate-800">{line || " "}</span>
               </div>
-            ) : (
-              <div className="relative">
-                <pre className="overflow-x-auto rounded-md bg-theme-dark/5 p-3 text-sm">
-                  <code className="text-xs">{selectedNode.code_snippet || 'No code available'}</code>
-                </pre>
-                
-                {selectedNode.code_snippet && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute right-2 top-2 bg-white/90 text-xs shadow-sm hover:bg-white"
-                    onClick={handleCopyCode}
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="mr-1 h-3 w-3" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-1 h-3 w-3" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            )}
+            ))
+            : 'No code available'
+          }
+        </code>
+      </pre>
+    </div>
+    
+    {selectedNode.code_snippet && (
+      <Button
+        variant="outline"
+        size="sm"
+        className="absolute right-2 top-2 bg-white/90 text-xs shadow-sm hover:bg-white"
+        onClick={handleCopyCode}
+      >
+        {copied ? (
+          <>
+            <Check className="mr-1 h-3 w-3" />
+            Copied
+          </>
+        ) : (
+          <>
+            <Copy className="mr-1 h-3 w-3" />
+            Copy
+          </>
+        )}
+      </Button>
+    )}
+  </div>
+)}
           </div>
           
           <div className="flex justify-end border-t border-theme-accent-1/10 bg-theme-light p-3">

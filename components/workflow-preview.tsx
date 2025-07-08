@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Maximize2, Minimize2, X, RefreshCw, Code, Copy, CheckCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CodePreview } from './code-preview';
 
 
 
@@ -141,6 +142,21 @@ export function WorkflowPreview({ isVisible, onClose, workflowType,previewHtml }
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [copied, setCopied] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(true);
+
+
+  
+    useEffect(() => {
+      if (isVisible) {
+        setLoadingPreview(true);
+        // Simulate loading the preview
+        const timer = setTimeout(() => {
+          setLoadingPreview(false);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }, [isVisible]);
+
 
   const defaultPreviewHtml = `
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background-color: #F4F9E0; color: #1C2326; font-family: sans-serif;">
@@ -252,6 +268,24 @@ export default WeatherApp;`;
   };
 
   return (
+    <>
+      {loadingPreview && (
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+      <motion.div 
+        className="h-12 w-12 rounded-full border-4 border-theme-accent-1/20 border-t-theme-accent-1"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      />
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="mt-4 text-theme-dark"
+      >
+        Loading preview...
+      </motion.p>
+    </div>
+  )}
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
@@ -319,50 +353,38 @@ export default WeatherApp;`;
         </div>
         
         <div className="h-[calc(100%-48px)] w-full overflow-auto">
-          {activeTab === 'preview' ? (
-            <div className="relative h-full w-full">
-              <iframe
-                srcDoc={defaultPreviewHtml || getPreviewHtml(workflowType)}
-                className="h-full w-full border-0"
-                title="Preview"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute bottom-4 right-4 bg-white/90 shadow-md hover:bg-white"
-                onClick={() => {/* Refresh preview logic */}}
-              >
-                <RefreshCw className="mr-1 h-3 w-3" />
-                Refresh
-              </Button>
-            </div>
-          ) : (
-            <div className="relative h-full">
-              <pre className="h-full overflow-auto bg-theme-dark/5 p-4 font-mono text-sm">
-                <code>{sampleReactCode}</code>
-              </pre>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute right-4 top-4 bg-white/90 shadow-md hover:bg-white"
-                onClick={handleCopyCode}
-              >
-                {copied ? (
-                  <>
-                    <CheckCheck className="mr-1 h-3 w-3" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="mr-1 h-3 w-3" />
-                    Copy Code
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
+        {activeTab === 'preview' ? (
+  <div className="relative h-full w-full">
+    <iframe
+      srcDoc={defaultPreviewHtml || getPreviewHtml(workflowType)}
+      className="h-full w-full border-0"
+      title="Preview"
+    />
+    <Button
+      variant="outline"
+      size="sm"
+      className="absolute bottom-4 right-4 bg-white/90 shadow-md hover:bg-white"
+      onClick={() => {/* Refresh preview logic */}}
+    >
+      <RefreshCw className="mr-1 h-3 w-3" />
+      Refresh
+    </Button>
+  </div>
+) : (
+  <div className="relative h-full">
+    <CodePreview 
+      code={sampleReactCode} 
+      title={workflowType === 'weather' ? 'WeatherApp.jsx' : 
+             workflowType === 'portfolio' ? 'Portfolio.jsx' : 
+             workflowType === 'api' ? 'server.js' : 'App.jsx'}
+      language="jsx"
+      className="h-full border-0 rounded-none"
+    />
+  </div>
+)}
+                </div>
       </motion.div>
     </motion.div>
+    </>
   );
 }

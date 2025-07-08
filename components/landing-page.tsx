@@ -1,11 +1,10 @@
-// Add more fluid animations to the landing page
-
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
 export function LandingPage({ onSubmit }: { onSubmit: (prompt: string) => void }) {
   const [inputValue, setInputValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +15,7 @@ export function LandingPage({ onSubmit }: { onSubmit: (prompt: string) => void }
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-theme-light via-white to-theme-light/50 p-4">
-      {/* Animated background elements */}
+      {/* Enhanced animated background elements */}
       <motion.div 
         className="absolute left-1/4 top-1/4 -z-10 h-64 w-64 rounded-full bg-theme-accent-1/5"
         animate={{
@@ -80,6 +79,13 @@ export function LandingPage({ onSubmit }: { onSubmit: (prompt: string) => void }
           }`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          animate={{
+            boxShadow: isFocused || isHovered 
+              ? "0 8px 30px rgba(218, 246, 130, 0.2)" 
+              : "0 4px 12px rgba(0, 0, 0, 0.05)"
+          }}
         >
           <textarea
             value={inputValue}
@@ -97,6 +103,13 @@ export function LandingPage({ onSubmit }: { onSubmit: (prompt: string) => void }
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               disabled={!inputValue.trim()}
+              initial={{ opacity: 0.9 }}
+              animate={{ 
+                opacity: inputValue.trim() ? 1 : 0.7,
+                backgroundColor: inputValue.trim() 
+                  ? "var(--theme-accent-1)" 
+                  : "rgba(218, 246, 130, 0.7)"
+              }}
             >
               Generate
             </motion.button>

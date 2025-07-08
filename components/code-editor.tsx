@@ -1,159 +1,427 @@
-"use client"
-
-import { useEffect, useRef, useState } from 'react';
-import { v4 as uuid } from 'uuid';
-import { AnimatePresence, motion } from 'framer-motion';
-import { LayoutGroup } from 'framer-motion';
-import { Download, Share, Code, MessageCircle , Copy, CheckCheck, Eye, TerminalIcon} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Terminal as TerminalIcon, 
+  Code as CodeIcon, 
+  Save, 
+  Play, 
+  Database, 
+  X, 
+  File, 
+  Folder 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { ButterflowWorkflowVisualization } from '@/components/workflow-visualization';
-import { Workflow as WorkflowType } from '@/types';
-import { WorkflowPreview } from '@/components/workflow-preview';
-import { ChatInterface } from '@/components/chat-interface';
-import { LandingPage } from '@/components/landing-page';
-import { LangChainMessage } from '@/types';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ThinkingIndicator } from '@/components/thinking-indicator';
-import { CodeGeneration } from '@/components/code-generation';
-import { CodeEditor } from '@/components/code-editor';
 import { Terminal } from '@/components/terminal';
-import { ArrowLeft } from 'lucide-react';
+import { Workflow } from '@/types';
 
+interface CodeEditorProps {
+  isVisible: boolean;
+  generatedCode?: string;
+  projectType?: 'weather' | 'portfolio' | 'api';
+  onClose?: () => void;
+  workflow?: Workflow | null;
+  selectedNodeId?: string | null;
+}
 
-export default function IndexPage() {
-  const [messages, setMessages] = useState<LangChainMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [chatStarted, setChatStarted] = useState(false);
-  const [workflow, setWorkflow] = useState<WorkflowType | null>(null);
-  const [showMobileView, setShowMobileView] = useState<'chat' | 'workflow'>('chat');
-  const [landingMode, setLandingMode] = useState(true);
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [generatingCode, setGeneratingCode] = useState(false);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedNodeCode, setSelectedNodeCode] = useState<string | null>(null);
-  const [showCodeEditor, setShowCodeEditor] = useState(false);
+interface FileTab {
+  id: string;
+  name: string;
+  language: string;
+  content: string;
+  icon?: React.ReactNode;
+  path?: string;
+}
+
+export function CodeEditor({ 
+  isVisible, 
+  generatedCode, 
+  projectType = 'weather', 
+  onClose,
+  workflow,
+  selectedNodeId
+}: CodeEditorProps) {
+  const [activeFileId, setActiveFileId] = useState<string>('');
+  const [files, setFiles] = useState<FileTab[]>([]);
   const [showTerminal, setShowTerminal] = useState(false);
   const [isTerminalMinimized, setIsTerminalMinimized] = useState(false);
-  const _threadId = useRef(uuid());
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [fileAddIndex, setFileAddIndex] = useState(-1);
   
-  const hasWorkflow = workflow !== null;
-
-
-
-const handleOpenTerminal = () => {
-  setShowTerminal(true);
-  setIsTerminalMinimized(false);
-};
-
-const handleCloseTerminal = () => {
-  setShowTerminal(false);
-};
-
-const handleMinimizeTerminal = () => {
-  setIsTerminalMinimized(!isTerminalMinimized);
-};
-
-   const handleSendMessage = async (content: string) => {
-      // Exit landing mode when first message is sent
-      if (landingMode) {
-        setLandingMode(false);
-      }
-      
-      // Set chat as started
-      if (!chatStarted) {
-        setChatStarted(true);
-      }
-  
-      // Add user message to chat
-      const userMessage: LangChainMessage = {
-        id: uuid(),
-        type: 'human',
-        content,
-      };
-  
-      setMessages((prev) => [...prev, userMessage]);
-      setIsLoading(true);
-      setGeneratingCode(true);
-  
-      try {
-        // In a real implementation, this would call the streamWorkflow function
-        // For now, we'll simulate a response after a delay
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-  
-        // Create a response based on the user's input
-        let responseContent = "";
-        let generatedWorkflow: WorkflowType | null = null;
-        
-        // Generate different responses based on content patterns
-        if (content.toLowerCase().includes("weather")) {
-          responseContent = "I've created a workflow for a React weather application. The app will fetch data from a weather API, display current conditions, forecasts, and allow location search. Key components include a weather service layer, UI components for displaying weather data, and a responsive layout.";
-          generatedWorkflow = createWeatherAppWorkflow();
-        } else if (content.toLowerCase().includes("api") || content.toLowerCase().includes("node")) {
-          responseContent = "I've designed a workflow for a Node.js API with authentication and MongoDB integration. The system includes user authentication with JWT, MongoDB data models, RESTful endpoints, and proper error handling. This architecture follows best practices for security and scalability.";
-          generatedWorkflow = createNodeApiWorkflow();
-        } else if (content.toLowerCase().includes("portfolio") || content.toLowerCase().includes("website")) {
-          responseContent = "I've created a workflow for a modern portfolio website using Next.js and Tailwind CSS. The site will include a responsive layout, project showcases, contact form, and optimized images. This architecture leverages Next.js for SEO benefits and Tailwind for efficient styling.";
-          generatedWorkflow = createPortfolioWorkflow();
-        } else {
-          responseContent = "I've created a workflow based on your request. This workflow architecture includes the core components, data flow, and key functionality needed for your application. You can explore each section in the visualization.";
-          generatedWorkflow = createGenericWorkflow();
-        }
-  
-        // Simulate AI response
-        const aiMessage: LangChainMessage = {
-          id: uuid(),
-          type: 'ai',
-          content: responseContent,
-        };
-  
-        setMessages((prev) => [...prev, aiMessage]);
-        console.log("Setting workflow:", generatedWorkflow);
-        setWorkflow(generatedWorkflow);
-
-        setGeneratingCode(false);
-
-      // If workflow was generated, select the first node to show its code
-      if (generatedWorkflow && generatedWorkflow.nodes.length > 0) {
-        // Store the first node in a constant to ensure type safety
-        const workflowFirstNode = generatedWorkflow.nodes[0];
-        
-        setTimeout(() => {
-          setSelectedNodeId(workflowFirstNode.id);
-          setSelectedNodeCode(workflowFirstNode.code_snippet || null);
-        }, 800);
-      }
-
-  
-      } catch (error) {
-        console.error('Error in chat:', error);
-        
-        // Add error message to chat
-        const errorMessage: LangChainMessage = {
-          id: uuid(),
-          type: 'ai',
-          content:
-            "I'm sorry, but I encountered an error while processing your request. Please try again with a different description.",
-        };
-        
-        setMessages((prev) => [...prev, errorMessage]);
-        setGeneratingCode(false);
-
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const handleNodeSelect = (id: string) => {
-    const selectedNode = workflow?.nodes.find(node => node.id === id);
-    setSelectedNodeId(id);
-    setSelectedNodeCode(selectedNode?.code_snippet || null);
+  // Get language from file extension
+  const getLanguageFromFilePath = (filePath: string) => {
+    if (filePath.endsWith('.js') || filePath.endsWith('.jsx')) return 'javascript';
+    if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) return 'typescript';
+    if (filePath.endsWith('.css')) return 'css';
+    if (filePath.endsWith('.json')) return 'json';
+    if (filePath.endsWith('.html')) return 'html';
+    return 'javascript';
   };
   
-    // Helper functions to create different workflow types
-    const createWeatherAppWorkflow = (): WorkflowType => {
+  // Get appropriate icon based on file type
+  const getFileIcon = (filePath: string) => {
+    if (filePath.endsWith('.css')) {
+      return <CodeIcon className="h-3.5 w-3.5 text-pink-500" />;
+    } else if (filePath.endsWith('.jsx') || filePath.endsWith('.tsx')) {
+      return <CodeIcon className="h-3.5 w-3.5 text-blue-500" />;
+    } else if (filePath.endsWith('.json')) {
+      return <CodeIcon className="h-3.5 w-3.5 text-yellow-500" />;
+    } else if (filePath.includes('model') || filePath.includes('schema')) {
+      return <Database className="h-3.5 w-3.5 text-green-500" />;
+    }
+    return <CodeIcon className="h-3.5 w-3.5 text-blue-500" />;
+  };
+  
+  // Generate files based on workflow
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    // Reset state
+    setFiles([]);
+    setFileAddIndex(-1);
+    setActiveFileId('');
+    setIsInitialized(false);
+    
+    // Get files from workflow or use default mock files
+    let mockFiles: FileTab[] = [];
+    
+    const createWorkflowFiles = (workflow: any) => {
+      if (!workflow || !workflow.nodes) return [];
+      
+      return workflow.nodes.map((node: { file_path: string; name: string; code_snippet: string; description: any; id: any; }) => {
+        // Determine file path
+        let filePath = node.file_path || '';
+        if (!filePath) {
+          // Generate file path based on node name and type
+          if (node.name.includes('Component') || node.name.includes('UI')) {
+            filePath = `components/${node.name.toLowerCase().replace(/\s+/g, '-')}.jsx`;
+          } else if (node.name.includes('Service') || node.name.includes('API')) {
+            filePath = `services/${node.name.toLowerCase().replace(/\s+/g, '-')}.js`;
+          } else if (node.name.includes('Model') || node.name.includes('Schema')) {
+            filePath = `models/${node.name.toLowerCase().replace(/\s+/g, '-')}.js`;
+          } else if (node.name.includes('Controller')) {
+            filePath = `controllers/${node.name.toLowerCase().replace(/\s+/g, '-')}.js`;
+          } else if (node.name.includes('Route')) {
+            filePath = `routes/${node.name.toLowerCase().replace(/\s+/g, '-')}.js`;
+          } else {
+            filePath = `src/${node.name.toLowerCase().replace(/\s+/g, '-')}.js`;
+          }
+        }
+        
+        // Get language and icon
+        const language = getLanguageFromFilePath(filePath);
+        const icon = getFileIcon(filePath);
+        
+        // Clean up code snippet by removing extra indentation
+        let content = node.code_snippet || '';
+        if (content) {
+          // Remove common leading spaces from all lines
+          const lines = content.split('\n');
+          const nonEmptyLines = lines.filter(line => line.trim().length > 0);
+          
+          if (nonEmptyLines.length > 0) {
+            const minIndent = nonEmptyLines.reduce((min, line) => {
+              const match = line.match(/^\s*/);
+              const indent = match ? match[0].length : 0;
+              return indent < min ? indent : min;
+            }, Infinity);
+            
+            if (minIndent !== Infinity) {
+              content = lines.map(line => line.slice(minIndent)).join('\n');
+            }
+          }
+        } else {
+          content = `// Code for ${node.name}\n\n// This file handles the ${node.description || 'functionality'} for the application`;
+        }
+        
+        // Create file object
+        return {
+          id: node.id,
+          name: filePath.split('/').pop() || `${node.name}.js`,
+          language,
+          icon,
+          content,
+          path: filePath
+        };
+      });
+    };
+    
+    if (workflow && workflow.nodes) {
+      // Create files from workflow nodes
+      mockFiles = createWorkflowFiles(workflow);
+    } else {
+      // Create mock data based on the project type
+      const mockWorkflow = getMockWorkflowForProjectType(projectType);
+      mockFiles = createWorkflowFiles({ nodes: mockWorkflow.nodes });
+    }
+    
+    // Animate files being added one by one
+    const interval = setInterval(() => {
+      setFileAddIndex(prevIndex => {
+        const nextIndex = prevIndex + 1;
+        if (nextIndex >= mockFiles.length) {
+          clearInterval(interval);
+          
+          // Show terminal after files are loaded
+          setTimeout(() => {
+            setShowTerminal(true);
+            setIsInitialized(true);
+          }, 800);
+          
+          return prevIndex;
+        }
+        
+        // Add this file to our state
+        const newFile = mockFiles[nextIndex];
+        setFiles(prev => [...prev, newFile]);
+        
+        // Set active file if this is the first one, or if it matches the selected node
+        if (nextIndex === 0 || (selectedNodeId && newFile.id === selectedNodeId)) {
+          setActiveFileId(newFile.id);
+        }
+        
+        return nextIndex;
+      });
+    }, 400);
+    
+    return () => clearInterval(interval);
+  }, [isVisible, projectType, generatedCode, workflow, selectedNodeId]);
+  
+  // Find active file
+  const activeFile = useMemo(() => 
+    files.find(file => file.id === activeFileId), 
+    [files, activeFileId]
+  );
+  
+  // Terminal handlers
+  const handleOpenTerminal = () => {
+    setShowTerminal(true);
+    setIsTerminalMinimized(false);
+  };
+  
+  const handleCloseTerminal = () => setShowTerminal(false);
+  const handleMinimizeTerminal = () => setIsTerminalMinimized(!isTerminalMinimized);
+  const handleMaximizeTerminal = () => setIsTerminalMinimized(false);
+  
+  // Editor close handler
+  const handleClose = () => {
+    if (onClose) onClose();
+  };
+  
+  // Create folder structure with unique files
+  const folderStructure = useMemo(() => {
+    const structure: Record<string, FileTab[]> = {};
+    const processedPaths = new Set<string>();
+    
+    files.forEach(file => {
+      const uniqueId = file.path || file.id;
+      
+      // Skip if already processed this path
+      if (processedPaths.has(uniqueId)) return;
+      processedPaths.add(uniqueId);
+      
+      // Determine folder
+      const folder = file.path && file.path.includes('/')
+        ? file.path.split('/').slice(0, -1).join('/')
+        : 'root';
+      
+      // Add file to folder
+      if (!structure[folder]) structure[folder] = [];
+      structure[folder].push(file);
+    });
+    
+    return structure;
+  }, [files]);
+  
+  // Syntax highlighting
+  const highlightSyntax = (code: string, language: string) => {
+    if (language === 'jsx' || language === 'javascript' || language === 'js') {
+      return code
+        .replace(/(import|export|from|function|const|let|var|return|if|else|for|while|try|catch|class|extends|async|await)/g, 
+          '<span style="color: #7c3aed;">$1</span>')
+        .replace(/('.*?'|".*?")/g, 
+          '<span style="color: #10b981;">$1</span>')
+        .replace(/(\/\/.*)/g, 
+          '<span style="color: #6b7280;">$1</span>')
+        .replace(/(\{|\}|\(|\)|\[|\])/g, 
+          '<span style="color: #d97706;">$1</span>')
+        .replace(/\b(true|false|null|undefined|NaN)\b/g,
+          '<span style="color: #f59e0b;">$1</span>');
+    }
+    
+    if (language === 'css') {
+      return code
+        .replace(/([\.\#][a-zA-Z0-9_-]+\s*\{)/g, 
+          '<span style="color: #7c3aed;">$1</span>')
+        .replace(/(\{|\})/g, 
+          '<span style="color: #d97706;">$1</span>')
+        .replace(/([a-zA-Z-]+)(\s*:\s*)/g, 
+          '<span style="color: #10b981;">$1</span>$2')
+        .replace(/(\/\*.*?\*\/)/gs, 
+          '<span style="color: #6b7280;">$1</span>');
+    }
+    
+    return code;
+  };
+  
+  if (!isVisible) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 z-50 bg-white"
+    >
+      <div className="flex h-full flex-col overflow-hidden">
+        {/* Editor header */}
+        <div className="flex items-center justify-between border-b border-theme-accent-1/10 bg-theme-light p-2">
+          <div className="flex items-center space-x-2">
+            <div className="flex space-x-1.5 px-2">
+              <div className="h-3 w-3 rounded-full bg-theme-accent-3"></div>
+              <div className="h-3 w-3 rounded-full bg-theme-accent-1"></div>
+              <div className="h-3 w-3 rounded-full bg-theme-accent-2"></div>
+            </div>
+            <div className="text-sm font-medium text-theme-dark/70">
+              {projectType === 'weather' ? 'Weather App' : 
+               projectType === 'portfolio' ? 'Portfolio Site' : 'Node.js API'} Editor
+            </div>
+          </div>
+          
+          <div className="flex space-x-2">
+            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-green-600">
+              <Save className="h-3.5 w-3.5" />
+              Save
+            </Button>
+            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-green-600">
+              <Play className="h-3.5 w-3.5" />
+              Run
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleOpenTerminal}
+              className="h-7 gap-1 text-xs text-theme-dark/60"
+            >
+              <TerminalIcon className="h-3.5 w-3.5 " />
+              Terminal
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleClose} 
+              className="h-7 w-7 p-0 "
+            >
+              <X className="h-4 w-4 text-red-600" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Main editor area */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* File explorer (left sidebar) */}
+          <motion.div 
+            className="w-60 border-r border-theme-accent-1/10 bg-theme-light/50 overflow-auto"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="p-3">
+              <div className="mb-2 px-2 text-xs font-medium text-theme-dark/70">PROJECT FILES</div>
+              
+              {/* Folder structure */}
+              {Object.entries(folderStructure).map(([folder, folderFiles]) => (
+                <div key={folder} className="mb-2">
+                  {folder !== 'root' && (
+                    <div className="flex items-center px-2 py-1 text-xs font-medium text-theme-dark/60">
+                      <Folder className="mr-1 h-3.5 w-3.5 text-theme-accent-2/70" />
+                      <span className="truncate">{folder}</span>
+                    </div>
+                  )}
+                  
+                  <div className={folder !== 'root' ? "ml-3" : ""}>
+                    {folderFiles.map((file, index) => (
+                      <motion.button
+                        key={file.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.2 + index * 0.1 }}
+                        onClick={() => setActiveFileId(file.id)}
+                        className={cn(
+                          "flex w-full items-center rounded px-2 py-1 text-xs",
+                          activeFileId === file.id ? "bg-theme-accent-1/20 font-medium" : "hover:bg-theme-accent-1/10"
+                        )}
+                      >
+                        <span className="mr-1.5 flex-shrink-0">
+                          {file.icon || <File className="h-3.5 w-3.5 text-theme-dark/60" />}
+                        </span>
+                        <span className="truncate text-theme-dark/60">{file.name}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+          
+          {/* Code editor (main area) */}
+          <div className="relative flex-1 overflow-hidden">
+            <AnimatePresence mode="wait">
+              {activeFile && (
+                <motion.div
+                  key={activeFileId}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="h-full w-full overflow-auto"
+                >
+                  <div className="sticky top-0 z-10 border-b border-theme-accent-1/10 bg-white/80 px-4 py-2 backdrop-blur-sm">
+                    <div className="text-xs text-theme-dark/60">{activeFile.path || activeFile.name}</div>
+                  </div>
+                  
+                  <pre className="p-4 text-sm font-mono">
+                    <code>
+                      {activeFile.content.split('\n').map((line, idx) => (
+                        <div key={idx} className="flex hover:bg-slate-100">
+                          <span className="mr-4 inline-block w-10 select-none border-r border-slate-200 pr-2 text-right text-slate-400 font-medium">
+                            {idx + 1}
+                          </span>
+                          <span 
+                            className="pl-3 text-slate-800 whitespace-pre-wrap break-words"
+                            dangerouslySetInnerHTML={{ 
+                              __html: highlightSyntax(line || " ", activeFile.language)
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </code>
+                  </pre>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+      
+      {/* Integrated Terminal */}
+      {showTerminal && (
+        <Terminal 
+          isVisible={showTerminal}
+          onClose={handleCloseTerminal}
+          projectType={projectType as 'weather' | 'portfolio' | 'api'}
+          isMinimized={isTerminalMinimized}
+          onMinimize={handleMinimizeTerminal}
+          onMaximize={handleMaximizeTerminal}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+   // Helper functions to create different workflow types
+    const createWeatherAppWorkflow = () => {
       return {
         version: '1.0',
         name: 'React Weather Application',
@@ -427,7 +695,7 @@ const handleMinimizeTerminal = () => {
       };
     };
   
-    const createNodeApiWorkflow = (): WorkflowType => {
+    const createNodeApiWorkflow = ()=> {
       return {
         version: '1.0',
         name: 'Node.js API with Authentication',
@@ -808,7 +1076,7 @@ const handleMinimizeTerminal = () => {
       };
     };
   
-    const createPortfolioWorkflow = (): WorkflowType => {
+    const createPortfolioWorkflow = () => {
       return {
         version: '1.0',
         name: 'Next.js Portfolio Website',
@@ -1541,7 +1809,7 @@ const handleMinimizeTerminal = () => {
       };
     };
   
-    const createGenericWorkflow = (): WorkflowType => {
+    const createGenericWorkflow = () => {
       return {
         version: '1.0',
         name: 'Generic Application',
@@ -1826,464 +2094,15 @@ const handleMinimizeTerminal = () => {
       };
     };
 
-  // If in landing mode, show the clean landing page
-  if (landingMode) {
-    return <LandingPage onSubmit={handleSendMessage} />;
+function getMockWorkflowForProjectType(projectType: string) {
+  if (projectType === 'weather') {
+    return createWeatherAppWorkflow();
   }
-
-  const getWorkflowPreviewType = (workflow: WorkflowType | null): 'weather' | 'portfolio' | 'api' | undefined => {
-  if (!workflow) return undefined;
-  
-  const name = workflow.name.toLowerCase();
-  if (name.includes('weather')) return 'weather';
-  if (name.includes('portfolio') || name.includes('website')) return 'portfolio';
-  if (name.includes('api') || name.includes('node')) return 'api';
-  
-  return undefined;
-};
-
-  return (
-  <div className="fixed inset-0 flex flex-col bg-gradient-to-br from-theme-light via-white to-theme-light/50 p-4 md:p-8">
-      {/* Background decorative elements */}
-      <div className="absolute left-0 top-0 -z-10 h-64 w-64 rounded-full bg-theme-accent-1/5 blur-3xl"></div>
-      <div className="absolute bottom-0 right-0 -z-10 h-96 w-96 rounded-full bg-theme-accent-2/5 blur-3xl"></div>
-      
-      {/* Mobile Toggle - Only on mobile */}
-      <div className="mb-2 flex md:hidden">
-        <Button
-          variant={showMobileView === 'chat' ? 'default' : 'outline'}
-          onClick={() => setShowMobileView('chat')}
-          className="flex-1 rounded-l-lg rounded-r-none border-theme-accent-1 bg-theme-accent-1 text-theme-dark hover:bg-theme-accent-2"
-        >
-          Chat
-        </Button>
-        <Button
-          variant={showMobileView === 'workflow' ? 'default' : 'outline'}
-          onClick={() => setShowMobileView('workflow')}
-          className="flex-1 rounded-l-none rounded-r-lg border-theme-accent-1 bg-theme-accent-1 text-theme-dark hover:bg-theme-accent-2"
-          disabled={!hasWorkflow}
-        >
-          Workflow
-          {hasWorkflow && <Badge className="ml-2 bg-theme-accent-3 text-theme-light">1</Badge>}
-        </Button>
-      </div>
-
-      {/* Main two-pane layout container */}
-      <LayoutGroup>
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left pane - Chat */}
-        <motion.div
-          className={cn(
-            'flex h-full overflow-hidden',
-            showMobileView === 'workflow' ? 'hidden md:flex' : 'flex'
-          )}
-          initial={{ width: '100%' }}
-          animate={{ 
-            width: hasWorkflow ? '40%' : 'min(100%, 800px)',
-            x: hasWorkflow ? 0 : 'calc(50% - min(50%, 400px))',
-          }}
-          layout
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        >
-            <Card className="flex h-full w-full flex-col overflow-hidden border-theme-accent-1/30 bg-white/90 shadow-lg backdrop-blur-sm">
-              <CardHeader className="border-b border-theme-accent-1/10 bg-white/80 pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center text-theme-dark">
-                    AI Chat
-                  </CardTitle>
-                  {chatStarted && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs text-theme-dark/70 hover:bg-theme-accent-1/10"
-                      onClick={() => {
-                        // Reset the application state
-                        setLandingMode(true);
-                        setChatStarted(false);
-                        setMessages([]);
-                        setWorkflow(null);
-                        setShowMobileView('chat');
-                      }}
-                      title="Start a new chat"
-                    >
-                      <MessageCircle className="h-4 w-4 mr-1" />
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-hidden p-0">
-                <ChatInterface
-                  messages={messages}
-                  isLoading={isLoading}
-                  onSendMessage={handleSendMessage}
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Right pane - Workflow visualization */}
-          <AnimatePresence mode="wait">
-            {hasWorkflow && (
-              <motion.div
-                className={cn(
-                  'flex h-full overflow-hidden',
-                  showMobileView === 'chat' ? 'hidden md:flex' : 'flex'
-                )}
-                initial={{ width: 0, opacity: 0, x: '5%' }}
-                animate={{ width: '60%', opacity: 1, x: 0 }}
-                exit={{ width: 0, opacity: 0, x: '5%' }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  opacity: { duration: 0.2 }
-                }}
-                layout
-              >
-                <Card className="flex h-full w-full flex-col overflow-hidden border-theme-accent-1/30 bg-white/90 shadow-lg backdrop-blur-sm">
-                  <CardHeader className="border-b border-theme-accent-1/10 bg-white/80 pb-2">
-                    <motion.div 
-                      className="flex items-center justify-between"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3, duration: 0.3 }}
-                    >
-                      <CardTitle className="flex items-center text-theme-dark">
-                        <Code className="mr-2 h-4 w-4 text-theme-accent-3" />
-                        <motion.span
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.5, duration: 0.3 }}
-                        >
-                          {workflow ? workflow.name : 'AI Chat'}
-                        </motion.span>
-                        {workflow && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: 0.7, duration: 0.3 }}
-                          >
-                            <Badge variant="outline" className="ml-2 bg-theme-accent-1/10 text-xs font-normal">
-                              v{workflow.version}
-                            </Badge>
-                          </motion.div>
-                        )}
-                      </CardTitle>
-                      
-                      {hasWorkflow && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.8, duration: 0.3 }}
-                        >
-                          <WorkflowActions 
-                            workflow={workflow} 
-                            onPreview={() => setPreviewVisible(true)}
-                            selectedNodeId={selectedNodeId}
-                            selectedNodeCode={selectedNodeCode}
-                            setShowCodeEditor={setShowCodeEditor}
-                            handleOpenTerminal={handleOpenTerminal}
-                          />
-                        </motion.div>
-                      )}
-                    </motion.div>
-                    
-                    {workflow && (
-                      <motion.p 
-                        className="mt-1 text-xs text-theme-dark/60"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.9, duration: 0.3 }}
-                      >
-                        {workflow.description}
-                      </motion.p>
-                    )}
-                  </CardHeader>
-                  
-                  <CardContent 
-                    className="flex-1 overflow-hidden p-0" 
-                    style={{ 
-                      height: "calc(100% - 100px)", 
-                      position: "relative", 
-                      minHeight: "400px" 
-                    }}
-                  >
-                    {workflow ? (
-                      <motion.div 
-                        className="h-full w-full" 
-                        style={{ 
-                          position: "absolute", 
-                          top: 0, 
-                          right: 0, 
-                          bottom: 0, 
-                          left: 0 
-                        }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1.0, duration: 0.5 }}
-                      >
-                        <ButterflowWorkflowVisualization
-                          workflow={{ workflow }}
-                          tasks={[]}
-                          onNodeSelect={handleNodeSelect}
-                        />
-                      </motion.div>
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <p className="text-theme-dark/60">No workflow available</p>
-                      </div>
-                    )}
-                  </CardContent>
-
-                  {generatingCode && (
-                    <ThinkingIndicator isThinking={generatingCode} text="Generating your application..." />
-                  )}
-
-                  {selectedNodeId && selectedNodeCode && (
-                    <CodeGeneration
-                      isVisible={!!selectedNodeId} 
-                      nodeId={selectedNodeId}
-                      code={selectedNodeCode}
-                      title={workflow?.nodes.find(n => n.id === selectedNodeId)?.name || "Code"}
-                    />
-                  )}
-                  
-                  <CardFooter className="border-t border-theme-accent-1/10 bg-white/80 p-3">
-                    <motion.div 
-                      className="flex w-full items-center justify-between"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.1, duration: 0.3 }}
-                    >
-                      <div className="text-xs text-theme-dark/60">
-                        <span className="font-medium text-theme-dark/80">Workflow v{workflow?.version || '1.0'}</span> • 
-                        <span className="ml-1">{workflow?.nodes.length || 0} nodes</span>
-                      </div>
-                    </motion.div>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Preview Modal */}
-          <AnimatePresence>
-            {previewVisible && (
-              <WorkflowPreview 
-                isVisible={previewVisible}
-                onClose={() => setPreviewVisible(false)}
-                workflowType={getWorkflowPreviewType(workflow)}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      </LayoutGroup>
-      {showCodeEditor && selectedNodeCode && (
-        <div className="absolute inset-0 z-40">
-          <CodeEditor 
-            isVisible={showCodeEditor}
-            generatedCode={selectedNodeCode}
-            projectType={getWorkflowPreviewType(workflow)}
-            onClose={() => setShowCodeEditor(false)}
-          />
-        </div>
-      )}
-      {showTerminal && (
-        <Terminal 
-          isVisible={showTerminal}
-          onClose={handleCloseTerminal}
-          projectType={getWorkflowPreviewType(workflow)}
-          isMinimized={isTerminalMinimized}
-          onMinimize={handleMinimizeTerminal}
-        />
-      )}
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setShowCodeEditor(!showCodeEditor)}
-      className="absolute bottom-4 right-4 bg-white/90 shadow-md hover:bg-white"
-    >
-      {showCodeEditor ? (
-        <>
-          <ArrowLeft className="mr-1 h-3 w-3" />
-          Back to Workflow
-        </>
-      ) : (
-        <>
-          <Code className="mr-1 h-3 w-3" />
-          Open Editor
-        </>
-      )}
-    </Button>
-      </div>
-  );
-}
-
-
-function WorkflowActions({ 
-  workflow, 
-  onPreview, 
-  selectedNodeId,
-  selectedNodeCode,
-  setShowCodeEditor,
-  handleOpenTerminal
-}: { 
-  workflow: WorkflowType | null, 
-  onPreview: () => void,
-  selectedNodeId: string | null,
-  selectedNodeCode: string | null,
-  setShowCodeEditor: (show: boolean) => void,
-  handleOpenTerminal: () => void
-}) {
-  const [copied, setCopied] = useState(false);
-  
-  if (!workflow) return null;
-  
-  const handleCopyWorkflow = () => {
-    navigator.clipboard.writeText(JSON.stringify(workflow, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  
-  const handleDownloadWorkflow = () => {
-    const element = document.createElement("a");
-    const file = new Blob([JSON.stringify(workflow, null, 2)], {type: 'application/json'});
-    element.href = URL.createObjectURL(file);
-    element.download = `${workflow.name.toLowerCase().replace(/\s+/g, '-')}-workflow.json`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-  
-  return (
-    <div className="flex space-x-2">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="h-8 w-8 rounded-md border border-theme-accent-1/50 bg-white shadow-sm hover:bg-theme-accent-1/10"
-              onClick={handleCopyWorkflow}
-            >
-              {copied ? 
-                <CheckCheck className="h-4 w-4 text-green-600" /> : 
-                <Copy className="h-4 w-4 text-theme-accent-3" />
-              }
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p className="text-xs">{copied ? 'Copied!' : 'Copy workflow JSON'}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="h-8 w-8 rounded-md border border-theme-accent-1/50 bg-white shadow-sm hover:bg-theme-accent-1/10"
-              onClick={handleDownloadWorkflow}
-            >
-              <Download className="h-4 w-4 text-theme-accent-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p className="text-xs">Download workflow</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="h-8 w-8 rounded-md border border-theme-accent-1/50 bg-white shadow-sm hover:bg-theme-accent-1/10"
-              onClick={onPreview}
-            >
-              <Eye className="h-4 w-4 text-theme-accent-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p className="text-xs">Preview application</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="h-8 w-8 rounded-md border border-theme-accent-1/50 bg-white shadow-sm hover:bg-theme-accent-1/10"
-              onClick={() => {
-                // Share workflow implementation
-                if (navigator.share) {
-                  navigator.share({
-                    title: workflow.name,
-                    text: `Check out my ${workflow.name} workflow!`,
-                    url: window.location.href,
-                  });
-                } else {
-                  // Fallback for browsers that don't support navigator.share
-                  navigator.clipboard.writeText(window.location.href);
-                  alert('Link copied to clipboard!');
-                }
-              }}
-            >
-              <Share className="h-4 w-4 text-theme-accent-3" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p className="text-xs">Share workflow</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="h-8 w-8 rounded-md border border-theme-accent-1/50 bg-white shadow-sm hover:bg-theme-accent-1/10"
-            onClick={() => {
-              // Open code editor with the currently selected node code
-              if (selectedNodeId && selectedNodeCode) {
-                setShowCodeEditor(true);
-              }
-            }}
-          >
-            <Code className="h-4 w-4 text-theme-accent-3" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          <p className="text-xs">Open Code Editor</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="h-8 w-8 rounded-md border border-theme-accent-1/50 bg-white shadow-sm hover:bg-theme-accent-1/10"
-            onClick={handleOpenTerminal}
-          >
-            <TerminalIcon className="text-theme-accent-3 h-4 w-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          <p className="text-xs">Open Terminal</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-    </div>
-  );
+  if (projectType === 'portfolio') {
+    return createPortfolioWorkflow();
+  }
+  if (projectType === 'api') {
+    return createNodeApiWorkflow();
+  }
+  return createGenericWorkflow();
 }
