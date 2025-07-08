@@ -1,18 +1,12 @@
-"use client"
+// Add more fluid animations to the landing page
 
-import { ArrowRight, Code } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 
-interface LandingPageProps {
-  onSubmit: (content: string) => void;
-}
-
-export function LandingPage({ onSubmit }: LandingPageProps) {
+export function LandingPage({ onSubmit }: { onSubmit: (prompt: string) => void }) {
   const [inputValue, setInputValue] = useState('');
-  
+  const [isFocused, setIsFocused] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
@@ -20,138 +14,103 @@ export function LandingPage({ onSubmit }: LandingPageProps) {
     }
   };
 
-  // Example projects that could inspire users
-  const examples = [
-    "Create a React app that fetches and displays weather data",
-    "Build a Node.js API with authentication and MongoDB",
-    "Design a portfolio website with Next.js and Tailwind"
-  ];
-  
-  // Animation variants for staggered animations
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.15,
-        delayChildren: 0.3
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
-    <div className="relative min-h-[calc(100vh-70px)] w-full overflow-hidden bg-gradient-to-b from-theme-light to-white">
-      {/* Background decorative elements */}
-      <div className="absolute left-0 top-0 h-64 w-64 rounded-full bg-theme-accent-1/10 blur-3xl"></div>
-      <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-theme-accent-2/10 blur-3xl"></div>
-      
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-theme-light via-white to-theme-light/50 p-4">
+      {/* Animated background elements */}
       <motion.div 
-        className="flex min-h-[calc(100vh-70px)] w-full flex-col items-center justify-center px-4 py-16"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+        className="absolute left-1/4 top-1/4 -z-10 h-64 w-64 rounded-full bg-theme-accent-1/5"
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <motion.div 
+        className="absolute bottom-1/4 right-1/4 -z-10 h-96 w-96 rounded-full bg-theme-accent-2/5"
+        animate={{
+          scale: [1, 1.3, 1],
+          opacity: [0.2, 0.4, 0.2],
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 1
+        }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-12 text-center"
+      >
+        <motion.h1 
+          className="mb-4 text-4xl font-bold text-theme-dark md:text-5xl"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          Create with AI
+        </motion.h1>
+        <motion.p 
+          className="text-lg text-theme-dark/70 md:text-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          Describe your application and I&apos;ll generate the code for you
+        </motion.p>
+      </motion.div>
+
+      <motion.form
+        onSubmit={handleSubmit}
+        className="w-full max-w-2xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.5 }}
       >
         <motion.div 
-          className="w-full max-w-2xl"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
+          className={`relative rounded-xl bg-white/80 p-1 shadow-lg backdrop-blur-sm transition-all duration-300 ${
+            isFocused ? "ring-2 ring-theme-accent-1 shadow-theme-accent-1/20" : ""
+          }`}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          
-          {/* Heading */}
-          <motion.h1 
-            className="mb-4 text-center text-4xl font-bold leading-tight text-theme-dark md:text-5xl"
-            variants={itemVariants}
-          >
-            Transform Ideas into <span className="bg-gradient-to-r from-theme-accent-3 to-theme-accent-1 bg-clip-text text-transparent">Workflows</span>
-          </motion.h1>
-          
-          {/* Subheading */}
-          <motion.p
-            className="mb-10 text-center text-lg text-theme-dark/70 md:text-xl"
-            variants={itemVariants}
-          >
-            Describe what you want to build, and our AI will create a comprehensive workflow
-          </motion.p>
-          
-          {/* Card */}
-          <motion.div
-            className="mb-8 overflow-hidden rounded-xl border border-theme-accent-1/30 bg-white/90 shadow-xl backdrop-blur-sm"
-            variants={itemVariants}
-          >
-            {/* Card header */}
-            <div className="border-b border-theme-accent-1/10 bg-theme-light/50 px-6 py-4">
-              <div className="flex items-center">
-                <div className="flex space-x-2">
-                  <div className="h-3 w-3 rounded-full bg-theme-accent-3"></div>
-                  <div className="h-3 w-3 rounded-full bg-theme-accent-1"></div>
-                  <div className="h-3 w-3 rounded-full bg-theme-accent-2"></div>
-                </div>
-                <div className="ml-4 text-sm font-medium text-theme-dark/70">New Project</div>
-              </div>
-            </div>
-            
-            {/* Card body */}
-            <div className="p-6">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-theme-dark/70" htmlFor="project-description">
-                    Project Description
-                  </label>
-                  <Textarea 
-                    id="project-description"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Describe your project idea in detail..."
-                    className="min-h-[150px] resize-none border-theme-accent-1/30 bg-theme-light/30 text-theme-dark placeholder:text-theme-dark/40 focus-visible:ring-theme-accent-1"
-                  />
-                </div>
-                
-                {/* Examples section */}
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-theme-dark/60">
-                    EXAMPLES
-                  </p>
-                  <div className="grid gap-2">
-                    {examples.map((example, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        className="flex items-center rounded-md border border-theme-accent-1/20 bg-theme-light/50 px-3 py-2 text-left text-sm text-theme-dark/80 transition-colors hover:bg-theme-accent-1/20"
-                        onClick={() => setInputValue(example)}
-                      >
-                        <Code className="mr-2 h-4 w-4 text-theme-accent-3" />
-                        {example}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-theme-accent-1 to-theme-accent-2 text-theme-dark transition-transform hover:scale-[1.02] hover:from-theme-accent-2 hover:to-theme-accent-1"
-                  disabled={!inputValue.trim()}
-                >
-                  Generate Workflow
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </form>
-            </div>
-          </motion.div>
-          
-          {/* Footer note */}
-          <motion.p
-            className="text-center text-sm text-theme-dark/50"
-            variants={itemVariants}
-          >
-            Our AI automatically creates structured workflows based on your description
-          </motion.p>
+          <textarea
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder="Describe your application... (e.g., 'Create a weather app with React')"
+            className="min-h-[120px] w-full resize-none bg-transparent p-4 text-theme-dark placeholder:text-theme-dark/40 focus:outline-none"
+            autoFocus
+          />
+          <div className="flex justify-end p-2">
+            <motion.button
+              type="submit"
+              className="rounded-lg bg-theme-accent-1 px-4 py-2 font-medium text-theme-dark hover:bg-theme-accent-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              disabled={!inputValue.trim()}
+            >
+              Generate
+            </motion.button>
+          </div>
         </motion.div>
+      </motion.form>
+
+      <motion.div 
+        className="mt-8 text-center text-sm text-theme-dark/60"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8, duration: 0.5 }}
+      >
+        Try &quot;Create a weather app&quot;, &quot;Build a portfolio site&quot;, or &quot;Make a Node.js API&quot;
       </motion.div>
     </div>
   );

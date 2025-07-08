@@ -1776,6 +1776,7 @@ export default function IndexPage() {
         ],
       };
     };
+
   // If in landing mode, show the clean landing page
   if (landingMode) {
     return <LandingPage onSubmit={handleSendMessage} />;
@@ -1842,8 +1843,21 @@ export default function IndexPage() {
                     AI Chat
                   </CardTitle>
                   {chatStarted && (
-                    <Button variant="ghost" size="sm" className="h-8 text-xs text-theme-dark/70 hover:bg-theme-accent-1/10">
-                      <MessageCircle />                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs text-theme-dark/70 hover:bg-theme-accent-1/10"
+                      onClick={() => {
+                        // Reset the application state
+                        setLandingMode(true);
+                        setChatStarted(false);
+                        setMessages([]);
+                        setWorkflow(null);
+                        setShowMobileView('chat');
+                      }}
+                      title="Start a new chat"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" />
                     </Button>
                   )}
                 </div>
@@ -1859,7 +1873,7 @@ export default function IndexPage() {
           </motion.div>
 
           {/* Right pane - Workflow visualization */}
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {hasWorkflow && (
               <motion.div
                 className={cn(
@@ -1869,31 +1883,70 @@ export default function IndexPage() {
                 initial={{ width: 0, opacity: 0, x: '5%' }}
                 animate={{ width: '60%', opacity: 1, x: 0 }}
                 exit={{ width: 0, opacity: 0, x: '5%' }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  opacity: { duration: 0.2 }
+                }}
                 layout
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               >
                 <Card className="flex h-full w-full flex-col overflow-hidden border-theme-accent-1/30 bg-white/90 shadow-lg backdrop-blur-sm">
                   <CardHeader className="border-b border-theme-accent-1/10 bg-white/80 pb-2">
-                    <div className="flex items-center justify-between">
+                    <motion.div 
+                      className="flex items-center justify-between"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.3 }}
+                    >
                       <CardTitle className="flex items-center text-theme-dark">
                         <Code className="mr-2 h-4 w-4 text-theme-accent-3" />
-                        {workflow ? workflow.name : 'AI Chat'}
+                        <motion.span
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.5, duration: 0.3 }}
+                        >
+                          {workflow ? workflow.name : 'AI Chat'}
+                        </motion.span>
+                        {workflow && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.7, duration: 0.3 }}
+                          >
+                            <Badge variant="outline" className="ml-2 bg-theme-accent-1/10 text-xs font-normal">
+                              v{workflow.version}
+                            </Badge>
+                          </motion.div>
+                        )}
                       </CardTitle>
                       
                       {hasWorkflow && (
-                        <WorkflowActions 
-                          workflow={workflow} 
-                          onPreview={() => setPreviewVisible(true)} 
-                        />
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.8, duration: 0.3 }}
+                        >
+                          <WorkflowActions 
+                            workflow={workflow} 
+                            onPreview={() => setPreviewVisible(true)} 
+                          />
+                        </motion.div>
                       )}
-                    </div>
+                    </motion.div>
                     
                     {workflow && (
-                      <p className="mt-1 text-xs text-theme-dark/60">
+                      <motion.p 
+                        className="mt-1 text-xs text-theme-dark/60"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.9, duration: 0.3 }}
+                      >
                         {workflow.description}
-                      </p>
+                      </motion.p>
                     )}
                   </CardHeader>
+                  
                   <CardContent 
                     className="flex-1 overflow-hidden p-0" 
                     style={{ 
@@ -1903,7 +1956,7 @@ export default function IndexPage() {
                     }}
                   >
                     {workflow ? (
-                      <div 
+                      <motion.div 
                         className="h-full w-full" 
                         style={{ 
                           position: "absolute", 
@@ -1912,6 +1965,9 @@ export default function IndexPage() {
                           bottom: 0, 
                           left: 0 
                         }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.0, duration: 0.5 }}
                       >
                         <ButterflowWorkflowVisualization
                           workflow={{ workflow }}
@@ -1921,27 +1977,32 @@ export default function IndexPage() {
                             // You can implement node selection behavior here
                           }}
                         />
-                      </div>
+                      </motion.div>
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <p className="text-theme-dark/60">No workflow available</p>
                       </div>
                     )}
                   </CardContent>
+                  
                   <CardFooter className="border-t border-theme-accent-1/10 bg-white/80 p-3">
-                    <div className="flex w-full items-center justify-between">
+                    <motion.div 
+                      className="flex w-full items-center justify-between"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.1, duration: 0.3 }}
+                    >
                       <div className="text-xs text-theme-dark/60">
-                        <span className="font-medium text-theme-dark/80">Workflow v1.0</span> • 
+                        <span className="font-medium text-theme-dark/80">Workflow v{workflow?.version || '1.0'}</span> • 
                         <span className="ml-1">{workflow?.nodes.length || 0} nodes</span>
                       </div>
-        
-                    </div>
+                    </motion.div>
                   </CardFooter>
                 </Card>
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           {/* Preview Modal */}
           <AnimatePresence>
             {previewVisible && (

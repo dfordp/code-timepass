@@ -99,7 +99,7 @@ export function ChatInterface({ messages, isLoading, onSendMessage }: ChatInterf
           </div>
           <h3 className="mb-2 text-center text-lg font-medium text-theme-dark">Start a conversation</h3>
           <p className="mb-8 text-center text-sm text-theme-dark/60">
-            Describe what you want to build, and I'll create a workflow for you
+            Describe what you want to build, and I will create a workflow for you
           </p>
           
           <div className="grid w-full max-w-md gap-2">
@@ -110,7 +110,7 @@ export function ChatInterface({ messages, isLoading, onSendMessage }: ChatInterf
                 className="justify-start border-theme-accent-1/20 bg-theme-light/50 text-left text-sm font-normal text-theme-dark/80 hover:bg-theme-accent-1/10"
                 onClick={() => onSendMessage(prompt)}
               >
-                "{prompt}"
+                {prompt}
               </Button>
             ))}
           </div>

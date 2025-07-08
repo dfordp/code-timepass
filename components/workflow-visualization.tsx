@@ -13,6 +13,7 @@ import {
 } from '@xyflow/react';
 import ELK from 'elkjs/lib/elk.bundled.js';
 import { useTheme } from 'next-themes';
+import { AnimatePresence, motion } from 'framer-motion';
 
 
 import '@xyflow/react/dist/style.css';
